@@ -16,5 +16,9 @@
     "next": "13.1.1",
     "react": "18.2.0",
     "react-dom": "18.2.0"
+  },
+  "devDependencies": {
+    "axios": "^1.2.2",
+    "cheerio": "^1.0.0-rc.12"
   }
 }
