@@ -24,7 +24,7 @@ async function fetchArticles() {
     }
   }
   // save output to file
-  fs.writeFileSync("articles.json", JSON.stringify(output));
+  fs.writeFileSync("fetchedArticles.json", JSON.stringify(output));
 }
 
 fetchArticles();
