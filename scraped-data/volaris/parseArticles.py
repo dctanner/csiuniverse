@@ -52,6 +52,7 @@ def hf_bert_cased(text, question):
     return tokenizer.decode(predict_answer_tokens, skip_special_tokens=True)
 
 def parse_articles():
+    parsedArticles = []
     for article in articles:
         title = article["title"].lower()
         # if title includes any of the parent companies, add parent company to acquisition object
@@ -81,14 +82,30 @@ def parse_articles():
 
         # find the target acquisition company in the article["content"]
         question = "Which company was acquired?"
-        # text = article["title"]
         text = soup.text
         roberta_answer = hf_roberta(text, question) # roberta has best results
-        article["company"] = roberta_answer
+        article["company"] = roberta_answer.strip()
 
+        question = "When was "+article["company"]+" founded?"
+        text = soup.text
+        roberta_answer = hf_roberta(text, question) # roberta has best results
+        if roberta_answer:
+            article["companyFounded"] = roberta_answer.strip()
+
+        # find 'About COMPANY' tag and if it exists extract the paragraph below it
+        if "companyFounded" in article:
+            about_tag = soup.find('strong', text=lambda t: f"About {article['company']}".lower() in f"{t}".lower())
+            if about_tag:
+                parent = about_tag.find_parent()
+                about_tag.decompose()
+                article["companyAbout"] = parent.text.replace("\n", "", 1)
+
+        del article["content"]
         print(article)
+        parsedArticles.append(article)
 
         # todo use https://opencorporates.com to get founding date and location of target company
-
+    with open('parsedArticles.json', 'w') as f:
+        json.dump(parsedArticles, f)
 
 parse_articles()
