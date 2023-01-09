@@ -1,7 +1,6 @@
 import json
 from bs4 import BeautifulSoup
 import transformers
-from transformers import BertTokenizer, BertForQuestionAnswering
 import torch        
 transformers.logging.set_verbosity_error()
 
@@ -16,12 +15,12 @@ acqTerms = ['acquires', 'acquisition', 'acquisiti', 'joins', 'unite', 'welcomes'
 with open("fetchedArticles.json", "r") as f:
     articles = json.load(f)
 
-def hf_roberta(text, question):
-    from transformers import RobertaTokenizer, RobertaForQuestionAnswering
-    import torch
+from transformers import RobertaTokenizer, RobertaForQuestionAnswering
+import torch
 
-    tokenizer = RobertaTokenizer.from_pretrained("deepset/roberta-large-squad2")
-    model = RobertaForQuestionAnswering.from_pretrained("deepset/roberta-large-squad2")
+tokenizer = RobertaTokenizer.from_pretrained("deepset/roberta-large-squad2")
+model = RobertaForQuestionAnswering.from_pretrained("deepset/roberta-large-squad2")
+def hf_roberta(text, question):
 
     inputs = tokenizer(question, text, return_tensors="pt", truncation=True)
     with torch.no_grad():
@@ -30,28 +29,6 @@ def hf_roberta(text, question):
     answer_start_index = outputs.start_logits.argmax()
     answer_end_index = outputs.end_logits.argmax()
 
-    predict_answer_tokens = inputs.input_ids[0, answer_start_index : answer_end_index + 1]
-    return tokenizer.decode(predict_answer_tokens, skip_special_tokens=True)
-
-def hf_bert(text, question):
-    tokenizer = BertTokenizer.from_pretrained("deepset/bert-large-uncased-whole-word-masking-squad2")
-    model = BertForQuestionAnswering.from_pretrained("deepset/bert-large-uncased-whole-word-masking-squad2")      
-    inputs = tokenizer(question, text, return_tensors="pt", truncation=True, max_length=512)
-    with torch.no_grad():
-        outputs = model(**inputs)       
-    answer_start_index = outputs.start_logits.argmax()
-    answer_end_index = outputs.end_logits.argmax()      
-    predict_answer_tokens = inputs.input_ids[0, answer_start_index : answer_end_index + 1]
-    return tokenizer.decode(predict_answer_tokens, skip_special_tokens=True)
-
-def hf_bert_cased(text, question):
-    tokenizer = BertTokenizer.from_pretrained("deepset/bert-base-cased-squad2")
-    model = BertForQuestionAnswering.from_pretrained("deepset/bert-base-cased-squad2")      
-    inputs = tokenizer(question, text, return_tensors="pt", truncation=True, max_length=512)
-    with torch.no_grad():
-        outputs = model(**inputs)       
-    answer_start_index = outputs.start_logits.argmax()
-    answer_end_index = outputs.end_logits.argmax()      
     predict_answer_tokens = inputs.input_ids[0, answer_start_index : answer_end_index + 1]
     return tokenizer.decode(predict_answer_tokens, skip_special_tokens=True)
 

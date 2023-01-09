@@ -17,10 +17,10 @@ acqTerms = ['acquires', 'acquisition', 'acquisiti', 'joins', 'unite', 'welcomes'
 with open("fetchedArticles.json", "r") as f:
     articles = json.load(f)
 
+tokenizer = RobertaTokenizer.from_pretrained("deepset/roberta-large-squad2")
+model = RobertaForQuestionAnswering.from_pretrained("deepset/roberta-large-squad2")
 def hf_roberta(text, question):
     try:
-        tokenizer = RobertaTokenizer.from_pretrained("deepset/roberta-large-squad2")
-        model = RobertaForQuestionAnswering.from_pretrained("deepset/roberta-large-squad2")
         inputs = tokenizer(question, text, return_tensors="pt", truncation=True)
         with torch.no_grad():
             outputs = model(**inputs)

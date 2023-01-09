@@ -2,11 +2,14 @@ import json
 from bs4 import BeautifulSoup
 import transformers
 import datetime
-from transformers import RobertaTokenizer, RobertaForQuestionAnswering
+from transformers import pipeline, RobertaTokenizer, RobertaForQuestionAnswering
+from transformers import AutoTokenizer, AutoModelForTokenClassification
 import torch
+from collections import OrderedDict
 transformers.logging.set_verbosity_error()
 
-parents = {'Jonas Software': ['Jonas Software', 'Jonas'], 'Vesta Software Group': ['Vesta Software Group', 'Vesta'], 'Volaris Group': ['Volaris Group', 'Volaris'], 'Cultura Technologies': ['Cultura Technologies'], 'Lumine Group': ['Lumine Group', 'Lumine'], 'Trapeze Group': ['Trapeze Group', 'Trapeze'], 'Constellation Software': ['Constellation Software Inc.', 'constellation software'], 'Harris': ['Harris Computer Systems', 'Harris']}
+parents = OrderedDict([('Jonas Software', ['Jonas Software', 'Jonas']), ('Vesta Software Group', ['Vesta Software Group', 'Vesta']), ('Volaris Group', ['Volaris Group', 'Volaris']), ('Cultura Technologies', ['Cultura Technologies']), ('Lumine Group', ['Lumine Group', 'Lumine']), ('Trapeze Group', ['Trapeze Group', 'Trapeze', 'Trapeze Software']), ('Harris', ['N. Harris', 'Harris Computer Systems', 'Harris']), ('Constellation Software Inc.', ['constellation software', 'constellation'])])
+csuParent = {}
 parentNames =[]
 for parent, names in parents.items():
     for name in names:
@@ -34,68 +37,77 @@ def hf_roberta(text, question):
     except:
         return None
 
+
+# def hf_ner(text):
+#     ner_tokenizer = AutoTokenizer.from_pretrained("Jean-Baptiste/camembert-ner")
+#     ner_model = AutoModelForTokenClassification.from_pretrained("Jean-Baptiste/camembert-ner")
+#     try:
+#         nlp = pipeline("ner", model=ner_model, tokenizer=ner_tokenizer, aggregation_strategy="simple")
+#         ner_results = nlp(text)
+#         return ner_results
+#     except:
+#         return None
+
 def parse_articles():
     parsedArticles = []
     for article in articles:
         title = article["title"].lower()
-        # if title includes any of the parent companies, add parent company to acquisition object
-        for parent, names in parents.items():
+        # if context includes any of the parent companies, add parent company to acquisition object
+        # but remove Constellation Software Inc. from the list of parents
+        parentsWithoutCSI = {k: v for k, v in parents.items() if k != "Constellation Software Inc."}
+        for parent, names in parentsWithoutCSI.items():
             for name in names:
-                if name.lower() in title:
+                if f'about {name.lower()}' in article["content"].lower():
                     article["parent"] = parent
                     break
-        
+    
         if not article.get("parent"):
-            # if title includes the name of any previous parsedArticles company, it is the parent
-            for parsedArticle in parsedArticles:
-                if parsedArticle["company"].lower() in title:
-                    article["parent"] = parsedArticle["company"]
-                    break
-
-            if not article.get("parent"):
-                print("NO PARENT", article["title"])
+            article["parent"] = "Constellation Software Inc."
+            print("--> NO PARENT, defaulting to CSI", article["title"])
 
         # find the link to the target company if it's in article.content
         soup = BeautifulSoup(article["content"], "html.parser")
         for a in soup.find_all("a"):
             url = a.get("href")
             # if url doesn't match any parentLinkText values, save to aquisition object
-            if not any(parent in url for parent in parentLinkText):
-                article["companyUrl"] = url
+            if url:
+                if not any(parent in url for parent in parentLinkText):
+                    article["companyUrl"] = url
         
 
+        text = soup.text
         # find the target acquisition company in the article["content"]
-        question = "Which company was acquired?"
-        text = soup.text
-        roberta_answer = hf_roberta(text, question) # roberta has best results
-        article["company"] = roberta_answer.strip()
-
-        question = "When was "+article["company"]+" founded?"
-        text = soup.text
-        roberta_answer = hf_roberta(text, question) # roberta has best results
+        roberta_answer = hf_roberta(text, "Which company was acquired?") # roberta has best results
         if roberta_answer:
-            article["companyFounded"] = roberta_answer.strip()
+            article["company"] = roberta_answer.strip()
+        
+            roberta_answer = hf_roberta(text, "When was "+article["company"]+" founded?") # roberta has best results
+            if roberta_answer:
+                article["companyFounded"] = roberta_answer.strip()
 
         # find first strong tag with text that includes "About" but does contain any of the values in parents dict arrays
         about_tag = None
-        for strong in soup.find_all("strong"):
+        for strong in soup.find_all("b"):
             if "about" in strong.text.lower():
                 if not any(parent in strong.text.lower() for parent in parentNames):
-                    about_tag = strong
+                    about_tag = strong.parent
                     break
         if about_tag:
             # find all the following p tags until we find a p tag with a strong inside it
             p_tags = about_tag.find_all_next("p")
             about_paragraphs = []
             for p in p_tags:
-                if p.find("strong"):
+                if p.find("b"):
                     break
                 else:
                     about_paragraphs.append(p.text)
             article["companyAbout"] = "".join(about_paragraphs)
 
-        # TODO extract date from article content and convert to iso format
-        # article["date"] = FINDDATE.isoformat()
+        # Load article["date"] string which has format "March 02, 2022" into date object and convert to iso format
+        try:
+            article["date"] = datetime.datetime.strptime(article["date"], "%B %d, %Y").isoformat()
+        except:
+            print("--> ERROR: could not parse date", article["date"])
         
         del article["content"]
         print(article)
