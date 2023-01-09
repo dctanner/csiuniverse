@@ -9,7 +9,6 @@ from collections import OrderedDict
 transformers.logging.set_verbosity_error()
 
 parents = OrderedDict([('Jonas Software', ['Jonas Software', 'Jonas']), ('Vesta Software Group', ['Vesta Software Group', 'Vesta']), ('Volaris Group', ['Volaris Group', 'Volaris']), ('Cultura Technologies', ['Cultura Technologies']), ('Lumine Group', ['Lumine Group', 'Lumine']), ('Trapeze Group', ['Trapeze Group', 'Trapeze', 'Trapeze Software']), ('Harris', ['N. Harris', 'Harris Computer Systems', 'Harris']), ('Constellation Software Inc.', ['constellation software', 'constellation'])])
-csuParent = {}
 parentNames =[]
 for parent, names in parents.items():
     for name in names:

@@ -1,18 +1,23 @@
 import json
 from bs4 import BeautifulSoup
-import transformers
 import datetime
-from transformers import RobertaTokenizer, RobertaForQuestionAnswering
+from collections import OrderedDict
 import torch
+import transformers
+from transformers import RobertaTokenizer, RobertaForQuestionAnswering
 transformers.logging.set_verbosity_error()
 
-parents = {'Jonas Software': ['Jonas Software', 'Jonas'], 'Vesta Software Group': ['Vesta Software Group', 'Vesta'], 'Volaris Group': ['Volaris Group', 'Volaris'], 'Cultura Technologies': ['Cultura Technologies'], 'Lumine Group': ['Lumine Group', 'Lumine'], 'Trapeze Group': ['Trapeze Group', 'Trapeze'], 'Constellation Software': ['Constellation Software Inc.', 'constellation software'], 'Harris': ['Harris Computer Systems', 'Harris']}
+parents = OrderedDict([('Jonas Software', ['Jonas Software', 'Jonas']), ('Vesta Software Group', ['Vesta Software Group', 'Vesta']), ('Volaris Group', ['Volaris Group', 'Volaris']), ('Cultura Technologies', ['Cultura Technologies']), ('Lumine Group', ['Lumine Group', 'Lumine']), ('Trapeze Group', ['Trapeze Group', 'Trapeze', 'Trapeze Software']), ('Harris', ['N. Harris', 'N. Harris Computer Corporation', 'N. Harris Computer Corporation (Harris)', 'Harris Computer Systems', 'Harris']), ('Constellation Software Inc.', ['constellation software', 'constellation'])])
 parentNames =[]
 for parent, names in parents.items():
     for name in names:
         parentNames.append(name.lower())
 parentLinkText = ['jonas', 'vesta', 'volaris', 'csi', 'trapeze', 'lumine', 'cultura', 'harris']
 acqTerms = ['acquires', 'acquisition', 'acquisiti', 'joins', 'unite', 'welcomes', 'expands']
+
+with open("../csi/parsedArticles.json", "r") as f:
+    csiAcqs = json.load(f)
+    csiAcqs.reverse() # start with oldest articles so that we can handle subidiaries acquiring subsidiaries
 
 with open("fetchedArticles.json", "r") as f:
     articles = json.load(f)
@@ -39,29 +44,46 @@ def parse_articles():
     for article in articles:
         title = article["title"].lower()
         # if title includes any of the parent companies, add parent company to acquisition object
+        newParent = None
         for parent, names in parents.items():
             for name in names:
                 if name.lower() in title:
-                    article["parent"] = parent
+                    newParent = parent
                     break
-        
-        if not article.get("parent"):
-            # if title includes the name of any previous parsedArticles company, it is the parent
+        if not newParent:
+            # if title includes the name of any previous parsedArticles or CSI acqusitions company, it is the parent
             for parsedArticle in parsedArticles:
-                if parsedArticle["company"].lower() in title:
-                    article["parent"] = parsedArticle["company"]
+                # if parsedArticle["company"] is not blank string and is in title
+                titleToMatch = parsedArticle["company"].lower().strip()
+                if titleToMatch != "" and titleToMatch in title:
+                    newParent = parsedArticle["company"]
+                    print("--> PARENT FROM PARSED ARTICLES: ", newParent)
                     break
-
-            if not article.get("parent"):
-                print("NO PARENT", article["title"])
-
+        if not newParent:
+            # if title includes the name of any previous CSI acqusitions, it is the parent
+            for csiAcq in csiAcqs:
+                if csiAcq.get("company"):
+                    titleToMatch = csiAcq["company"].lower()
+                    # remove all company postfixes like Ltd, Inc., from the titleToMatch
+                    for postfix in ["ltd", "inc", "corp", "llc", "plc", "group", "systems", "software"]:
+                        titleToMatch = titleToMatch.replace(postfix, "")
+                    titleToMatch = titleToMatch.strip()
+                    if titleToMatch != "" and titleToMatch in title:
+                        newParent = csiAcq["company"]
+                        print("--> PARENT FROM CSI ACQ: ", newParent)
+                        break
+        if not newParent:
+            print("--> NO PARENT", article["title"])
+        
+        article["parent"] = newParent
         # find the link to the target company if it's in article.content
         soup = BeautifulSoup(article["content"], "html.parser")
         for a in soup.find_all("a"):
             url = a.get("href")
             # if url doesn't match any parentLinkText values, save to aquisition object
-            if not any(parent in url for parent in parentLinkText):
-                article["companyUrl"] = url
+            if url:
+                if not any(parent in url for parent in parentLinkText):
+                    article["companyUrl"] = url
         
 
         # find the target acquisition company in the article["content"]

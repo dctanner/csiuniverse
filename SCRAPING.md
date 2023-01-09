@@ -1,9 +1,7 @@
 We scraped the press releases for all OGs to build a complete acquisitions database from the start.
 
-See scraped-data folder for our raw output. These results are then loaded into an SQlite db, before the info we want is extract from the press release text.
+For each folder ing scraped-data, cd in and run the fetchArticles scripts followed by the parseArticles one. Start with csi, as later ones like harris depend on the output of that.
 
-## Volaris
+scraped-data/exportToCsv.py then takes all the parsedArticles.json files saves them to acquisitions.csv which we load into Google Sheets which is used as the main db for the application itself.
 
-Has a JSON API which returns all news in one req: https://explore.volarisgroup.com/themes/tiles/collection/8737532?excludeCTAs=false&format=html&infiniteScroll=false&limit=20&page=3
-
-parseArticles.py needs to run on a GPU machine.
+Then there's a manual cleanup step where we look at all entries with a blank company or parent and manually input these. We do this in Google Sheets.
