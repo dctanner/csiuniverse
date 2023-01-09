@@ -18,28 +18,29 @@ export async function getServerSideProps() {
 
 export default function Home({ data }) {
 
-  // data is an array of objects with the following keys: Group, Company Name. Reorganise the data into a tree structure with the keys: name, children.
-  const treeData = {
-    name: 'Constellation Software',
-    children: data.reduce((acc, { Group, 'Company Name': name }) => {
-      const [parent, child] = Group.split(' > ');
-      const parentIndex = acc.findIndex(({ name }) => name === parent);
-      if (parentIndex === -1) {
-        acc.push({
-          name: parent,
-          children: [{ name: child, children: [{ name }] }]
-        })
-      } else {
-        const childIndex = acc[parentIndex].children.findIndex(({ name }) => name === child);
-        if (childIndex === -1) {
-          acc[parentIndex].children.push({ name: child, children: [{ name }] })
-        } else {
-          acc[parentIndex].children[childIndex].children.push({ name })
-        }
-      }
-      return acc;
-    }, [])
+  // data is an array of objects with the following keys: name, parent. Write a function that calls itself, to reformat the data into a recursive structure with the keys: name, children. Children is an array of objects with the same structure. The function should be called with the root node as an argument.
+  function reformatData(data, root) {
+    // create an empty children array for the root node
+    root.children = [];
+  
+    // if root.name is not blank
+    if (root.name) {
+      // find all the children of the root node
+      console.log(root.name)
+      const children = data.filter(item => item.parent === root.name);
+    
+      // for each child, call the function recursively with the child as the root node
+      children.forEach(child => {
+        root.children.push(reformatData(data, child));
+      });
+    }
+    // return the root node with the children array
+    return root;
   }
+  const rootNode = { name: "Constellation Software", children: [] };
+  const treeData = reformatData(data, rootNode);
+  // log the treeData to the console as a string
+  console.log(JSON.stringify(treeData));
 
   return (
     <>

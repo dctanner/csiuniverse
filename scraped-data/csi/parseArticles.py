@@ -8,7 +8,7 @@ import torch
 from collections import OrderedDict
 transformers.logging.set_verbosity_error()
 
-parents = OrderedDict([('Jonas Software', ['Jonas Software', 'Jonas']), ('Vesta Software Group', ['Vesta Software Group', 'Vesta']), ('Volaris Group', ['Volaris Group', 'Volaris']), ('Cultura Technologies', ['Cultura Technologies']), ('Lumine Group', ['Lumine Group', 'Lumine']), ('Trapeze Group', ['Trapeze Group', 'Trapeze', 'Trapeze Software']), ('Harris', ['N. Harris', 'Harris Computer Systems', 'Harris']), ('Constellation Software Inc.', ['constellation software', 'constellation'])])
+parents = OrderedDict([('Jonas Software', ['Jonas Software', 'Jonas']), ('Vesta Software Group', ['Vesta Software Group', 'Vesta']), ('Volaris Group', ['Volaris Group', 'Volaris']), ('Cultura Technologies', ['Cultura Technologies']), ('Lumine Group', ['Lumine Group', 'Lumine']), ('Trapeze Group', ['Trapeze Group', 'Trapeze', 'Trapeze Software']), ('Harris', ['N. Harris', 'Harris Computer Systems', 'Harris']), ('Constellation Software', ['constellation software inc.', 'constellation software', 'constellation'])])
 parentNames =[]
 for parent, names in parents.items():
     for name in names:
@@ -53,7 +53,7 @@ def parse_articles():
         title = article["title"].lower()
         # if context includes any of the parent companies, add parent company to acquisition object
         # but remove Constellation Software Inc. from the list of parents
-        parentsWithoutCSI = {k: v for k, v in parents.items() if k != "Constellation Software Inc."}
+        parentsWithoutCSI = {k: v for k, v in parents.items() if k != "Constellation Software"}
         for parent, names in parentsWithoutCSI.items():
             for name in names:
                 if f'about {name.lower()}' in article["content"].lower():
@@ -61,7 +61,7 @@ def parse_articles():
                     break
     
         if not article.get("parent"):
-            article["parent"] = "Constellation Software Inc."
+            article["parent"] = "Constellation Software"
             print("--> NO PARENT, defaulting to CSI", article["title"])
 
         # find the link to the target company if it's in article.content
