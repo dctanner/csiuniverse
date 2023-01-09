@@ -7,7 +7,7 @@ import transformers
 from transformers import RobertaTokenizer, RobertaForQuestionAnswering
 transformers.logging.set_verbosity_error()
 
-parents = OrderedDict([('Jonas Software', ['Jonas Software', 'Jonas']), ('Vesta Software Group', ['Vesta Software Group', 'Vesta']), ('Volaris Group', ['Volaris Group', 'Volaris']), ('Cultura Technologies', ['Cultura Technologies']), ('Lumine Group', ['Lumine Group', 'Lumine']), ('Trapeze Group', ['Trapeze Group', 'Trapeze', 'Trapeze Software']), ('Harris', ['N. Harris', 'N. Harris Computer Corporation', 'N. Harris Computer Corporation (Harris)', 'Harris Computer Systems', 'Harris']), ('Constellation Software', ['constellation software inc.', 'constellation software', 'constellation'])])
+parents = OrderedDict([('Jonas Software', ['Jonas Software', 'Jonas']), ('Vesta Software Group', ['Vesta Software Group', 'Vesta']), ('Volaris Group', ['Volaris Group', 'Volaris']), ('Cultura Technologies', ['Cultura Technologies']), ('Lumine Group', ['Lumine Group', 'Lumine']), ('Trapeze Group', ['Trapeze Group', 'Trapeze', 'Trapeze Software']), ('Harris', ['N. Harris', 'Harris Computer Systems', 'Harris']), ('Vela', ['vela', 'friedman', 'Friedman Corporation', 'Vela Software', 'Vela Software Group', 'Vela Software International, Inc.']), ('Total Specific Solutions', ['TSS', 'Total Specific Solutions (TSS) B.V.', 'Total Specific Solutions']), ('Perseus', ['Perseus', 'Perseus division']), ('Constellation Software', ['constellation software inc.', 'constellation software', 'constellation'])])
 parentNames =[]
 for parent, names in parents.items():
     for name in names:
@@ -93,8 +93,8 @@ def parse_articles():
         article["company"] = roberta_answer.strip()
 
         # Edge cases
-        if article["company"] == "Everwin SAS (Everwin),":
-            article["company"] = "Everwin"
+        # if article["company"] == "Everwin SAS (Everwin),":
+        #     article["company"] = "Everwin"
 
         question = "When was "+article["company"]+" founded?"
         text = soup.text
@@ -113,6 +113,7 @@ def parse_articles():
             # find all the following p tags until we find a p tag with a strong inside it
             p_tags = about_tag.find_all_next("p")
             about_paragraphs = []
+            about_paragraphs.append(about_tag.parent.text)
             for p in p_tags:
                 if p.find("strong"):
                     break

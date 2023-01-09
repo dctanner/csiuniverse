@@ -8,7 +8,7 @@ import torch
 from collections import OrderedDict
 transformers.logging.set_verbosity_error()
 
-parents = OrderedDict([('Jonas Software', ['Jonas Software', 'Jonas']), ('Vesta Software Group', ['Vesta Software Group', 'Vesta']), ('Volaris Group', ['Volaris Group', 'Volaris']), ('Cultura Technologies', ['Cultura Technologies']), ('Lumine Group', ['Lumine Group', 'Lumine']), ('Trapeze Group', ['Trapeze Group', 'Trapeze', 'Trapeze Software']), ('Harris', ['N. Harris', 'Harris Computer Systems', 'Harris']), ('Constellation Software', ['constellation software inc.', 'constellation software', 'constellation'])])
+parents = OrderedDict([('Jonas Software', ['Jonas Software', 'Jonas']), ('Vesta Software Group', ['Vesta Software Group', 'Vesta']), ('Volaris Group', ['Volaris Group', 'Volaris']), ('Cultura Technologies', ['Cultura Technologies']), ('Lumine Group', ['Lumine Group', 'Lumine']), ('Trapeze Group', ['Trapeze Group', 'Trapeze', 'Trapeze Software']), ('Harris', ['N. Harris', 'Harris Computer Systems', 'Harris']), ('Vela', ['vela', 'friedman', 'Friedman Corporation', 'Vela Software', 'Vela Software Group', 'Vela Software International, Inc.']), ('Total Specific Solutions', ['TSS', 'Total Specific Solutions (TSS) B.V.', 'Total Specific Solutions']), ('Perseus', ['Perseus', 'Perseus division']), ('Constellation Software', ['constellation software inc.', 'constellation software', 'constellation'])])
 parentNames =[]
 for parent, names in parents.items():
     for name in names:
